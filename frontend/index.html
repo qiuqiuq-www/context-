@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI记忆库</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      background-color: #4CAF50;
+      color: white;
+      padding: 20px 0;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    header h1 {
+      text-align: center;
+      font-size: 28px;
+    }
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s;
+    }
+    .btn-primary {
+      background-color: #4CAF50;
+      color: white;
+    }
+    .btn-primary:hover {
+      background-color: #45a049;
+    }
+    .btn-danger {
+      background-color: #f44336;
+      color: white;
+    }
+    .btn-danger:hover {
+      background-color: #d32f2f;
+    }
+    .tab-container {
+      margin-bottom: 20px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #eee;
+    }
+    .tab {
+      padding: 15px 20px;
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-size: 14px;
+      font-weight: 500;
+      color: #666;
+      transition: all 0.3s;
+      border-bottom: 3px solid transparent;
+    }
+    .tab.active {
+      color: #4CAF50;
+      border-bottom-color: #4CAF50;
+      background-color: #f9f9f9;
+    }
+    .tab-content {
+      padding: 20px;
+    }
+    .memory-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .category-section {
+      margin-bottom: 30px;
+    }
+    .category-section h3 {
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: #4CAF50;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    .memory-item {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .memory-item:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .memory-item h4 {
+      font-size: 16px;
+      margin-bottom: 10px;
+      color: #4CAF50;
+    }
+    .memory-item .category-tag {
+      display: inline-block;
+      padding: 5px 12px;
+      background-color: #e8f5e8;
+      color: #2e7d32;
+      border-radius: 15px;
+      font-size: 12px;
+      margin-bottom: 10px;
+      font-weight: 500;
+      transition: all 0.3s;
+    }
+    .memory-item .category-tag:hover {
+      background-color: #c8e6c9;
+      transform: scale(1.05);
+    }
+    .category-path {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+    .category-path span {
+      padding: 3px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      background-color: #e3f2fd;
+      color: #1976d2;
+    }
+    .category-path span:last-child {
+      background-color: #e8f5e8;
+      color: #2e7d32;
+    }
+    .memory-item p {
+      margin-bottom: 10px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .memory-item .metadata {
+      font-size: 12px;
+      color: #666;
+      margin-top: 15px;
+      padding-top: 10px;
+      border-top: 1px solid #eee;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .empty-state h2 {
+      font-size: 20px;
+      margin-bottom: 10px;
+      color: #666;
+    }
+    .empty-state p {
+      color: #999;
+    }
+    .loading {
+      text-align: center;
+      padding: 40px 0;
+      color: #666;
+    }
+    #mindmap-container {
+      width: 100%;
+      height: 600px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      overflow: auto;
+    }
+    .mindmap-node {
+      padding: 10px;
+      border-radius: 4px;
+      margin: 5px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .mindmap-node:hover {
+      background-color: #f0f0f0;
+    }
+    .mindmap-root {
+      font-weight: bold;
+      font-size: 18px;
+      color: #4CAF50;
+    }
+    .mindmap-level-1 {
+      font-weight: 500;
+      font-size: 16px;
+      color: #2196F3;
+      margin-left: 20px;
+    }
+    .mindmap-level-2 {
+      font-size: 14px;
+      color: #FF9800;
+      margin-left: 40px;
+    }
+    .mindmap-level-3 {
+      font-size: 13px;
+      color: #9C27B0;
+      margin-left: 60px;
+    }
+    .process-section {
+      margin-bottom: 20px;
+      padding: 20px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .process-section h3 {
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: #4CAF50;
+    }
+    .process-input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      resize: vertical;
+      min-height: 100px;
+    }
+    .result-section {
+      margin-top: 20px;
+      padding: 20px;
+      background-color: #f9f9f9;
+      border-radius: 8px;
+    }
+    .result-section h4 {
+      font-size: 16px;
+      margin-bottom: 10px;
+      color: #333;
+    }
+    .result-categories {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .result-category {
+      padding: 8px 16px;
+      background-color: #e3f2fd;
+      color: #1976d2;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .result-summary {
+      margin-bottom: 15px;
+      padding: 15px;
+      background-color: #fff3e0;
+      border-left: 4px solid #ff9800;
+      border-radius: 4px;
+    }
+    .result-markdown {
+      padding: 15px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>AI记忆库</h1>
+    </div>
+  </header>
+  <div class="container">
+    <div class="controls">
+      <h2>收集的文本</h2>
+      <button class="btn btn-danger" id="clearBtn">清空记忆库</button>
+    </div>
+    <div class="tab-container">
+      <div class="tabs">
+        <button class="tab active" data-tab="all">全部</button>
+        <button class="tab" data-tab="categorized">分类视图</button>
+        <button class="tab" data-tab="mindmap">思维导图</button>
+        <button class="tab" data-tab="process">文本处理</button>
+      </div>
+      <div class="tab-content">
+        <div id="all-tab" class="tab-pane active">
+          <div id="memoryContainer">
+            <div class="loading">加载中...</div>
+          </div>
+        </div>
+        <div id="categorized-tab" class="tab-pane">
+          <div id="categorizedContainer">
+            <div class="loading">加载中...</div>
+          </div>
+        </div>
+        <div id="mindmap-tab" class="tab-pane">
+          <div class="controls">
+            <h2>思维导图</h2>
+            <button class="btn btn-primary" id="refreshMindMapBtn">刷新思维导图</button>
+          </div>
+          <div id="mindmap-container">
+            <div class="loading">加载中...</div>
+          </div>
+        </div>
+        <div id="process-tab" class="tab-pane">
+          <div class="process-section">
+            <h3>文本处理</h3>
+            <textarea class="process-input" id="processInput" placeholder="请输入要处理的文本..."></textarea>
+            <button class="btn btn-primary" id="processBtn">处理文本</button>
+            <div id="processResult" class="result-section" style="display: none;">
+              <h4>处理结果</h4>
+              <div class="result-categories" id="resultCategories"></div>
+              <div class="result-summary" id="resultSummary"></div>
+              <div>
+                <h4>Markdown 输出</h4>
+                <div class="result-markdown" id="resultMarkdown"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 标签页切换功能
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        // 移除所有标签页的active类
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+        
+        // 添加当前标签页的active类
+        tab.classList.add('active');
+        const tabId = tab.dataset.tab;
+        document.getElementById(`${tabId}-tab`).classList.add('active');
+        
+        // 根据标签页加载对应数据
+        if (tabId === 'all') {
+          loadMemory();
+        } else if (tabId === 'categorized') {
+          loadCategorizedMemory();
+        } else if (tabId === 'mindmap') {
+          loadMindMap();
+        }
+      });
+    });
+
+    // 文本处理功能
+    document.getElementById('processBtn').addEventListener('click', () => {
+      const input = document.getElementById('processInput').value;
+      if (!input) {
+        alert('请输入要处理的文本');
+        return;
+      }
+      
+      // 显示加载状态
+      document.getElementById('processResult').style.display = 'block';
+      document.getElementById('resultCategories').innerHTML = '<div class="loading">处理中...</div>';
+      document.getElementById('resultSummary').innerHTML = '';
+      document.getElementById('resultMarkdown').innerHTML = '';
+      
+      // 调用API处理文本
+      fetch('http://localhost:3000/api/process', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ text: input })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          alert('处理失败: ' + data.error);
+          return;
+        }
+        
+        // 显示分类标签
+        const categories = data.category || [];
+        document.getElementById('resultCategories').innerHTML = categories.map(category => 
+          `<span class="result-category">${category}</span>`
+        ).join('');
+        
+        // 显示上下文总结
+        document.getElementById('resultSummary').textContent = data.context_summary || '无总结';
+        
+        // 显示Markdown
+        document.getElementById('resultMarkdown').textContent = data.markdown || '';
+        
+        // 自动添加到记忆库并刷新思维导图
+        fetch('http://localhost:3000/api/collect', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ text: input, title: '文本处理结果' })
+        })
+        .then(response => response.json())
+        .then(() => {
+          // 刷新思维导图
+          loadMindMap();
+          // 刷新记忆库
+          loadMemory();
+        })
+        .catch(error => {
+          console.error('添加到记忆库失败:', error);
+        });
+      })
+      .catch(error => {
+        console.error('处理失败:', error);
+        document.getElementById('resultCategories').innerHTML = '<div class="empty-state"><p>处理失败，请检查后端服务是否运行</p></div>';
+      });
+    });
+
+    // 加载记忆库数据
+    function loadMemory() {
+      fetch('http://localhost:3000/api/memory')
+        .then(response => response.json())
+        .then(data => {
+          const container = document.getElementById('memoryContainer');
+          if (data.length === 0) {
+            container.innerHTML = `
+              <div class="empty-state">
+                <h2>记忆库为空</h2>
+                <p>使用浏览器插件右键选择文本并收集到记忆库</p>
+              </div>
+            `;
+          } else {
+            container.innerHTML = data.map(item => {
+              const category = item.category || '未分类';
+              let categoryHtml = '';
+              
+              // 检查分类是否包含路径结构
+              if (category.includes('/')) {
+                const categories = category.split('/');
+                categoryHtml = `
+                  <div class="category-path">
+                    ${categories.map(cat => `<span>${cat}</span>`).join('')}
+                  </div>
+                `;
+              } else {
+                categoryHtml = `<div class="category-tag">${category}</div>`;
+              }
+              
+              return `
+                <div class="memory-item">
+                  ${categoryHtml}
+                  <h4>${item.title || '无标题'}</h4>
+                  <p>${item.cleanedText}</p>
+                  <div class="metadata">
+                    <p>来源: <a href="${item.url}" target="_blank">${item.url}</a></p>
+                    <p>收集时间: ${new Date(item.timestamp).toLocaleString()}</p>
+                  </div>
+                </div>
+              `;
+            }).join('');
+          }
+        })
+        .catch(error => {
+          console.error('加载失败:', error);
+          document.getElementById('memoryContainer').innerHTML = `
+            <div class="empty-state">
+              <h2>加载失败</h2>
+              <p>请检查后端服务是否运行</p>
+            </div>
+          `;
+        });
+    }
+
+    // 加载分类后的记忆库数据
+    function loadCategorizedMemory() {
+      fetch('http://localhost:3000/api/memory/categorized')
+        .then(response => response.json())
+        .then(data => {
+          const container = document.getElementById('categorizedContainer');
+          const categories = Object.keys(data);
+          
+          if (categories.length === 0) {
+            container.innerHTML = `
+              <div class="empty-state">
+                <h2>记忆库为空</h2>
+                <p>使用浏览器插件右键选择文本并收集到记忆库</p>
+              </div>
+            `;
+          } else {
+            container.innerHTML = categories.map(category => {
+              const items = data[category];
+              
+              // 处理分类名称，提取主分类
+              let displayCategory = category;
+              if (category.includes('/')) {
+                displayCategory = category.split('/')[0];
+              }
+              
+              return `
+                <div class="category-section">
+                  <h3>${category} (${items.length})</h3>
+                  <div class="memory-list">
+                    ${items.map(item => {
+                      const itemCategory = item.category || '未分类';
+                      let categoryHtml = '';
+                      
+                      // 检查分类是否包含路径结构
+                      if (itemCategory.includes('/')) {
+                        const categories = itemCategory.split('/');
+                        categoryHtml = `
+                          <div class="category-path">
+                            ${categories.map(cat => `<span>${cat}</span>`).join('')}
+                          </div>
+                        `;
+                      } else {
+                        categoryHtml = `<div class="category-tag">${itemCategory}</div>`;
+                      }
+                      
+                      return `
+                        <div class="memory-item">
+                          ${categoryHtml}
+                          <h4>${item.title || '无标题'}</h4>
+                          <p>${item.cleanedText}</p>
+                          <div class="metadata">
+                            <p>来源: <a href="${item.url}" target="_blank">${item.url}</a></p>
+                            <p>收集时间: ${new Date(item.timestamp).toLocaleString()}</p>
+                          </div>
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>
+                </div>
+              `;
+            }).join('');
+          }
+        })
+        .catch(error => {
+          console.error('加载失败:', error);
+          document.getElementById('categorizedContainer').innerHTML = `
+            <div class="empty-state">
+              <h2>加载失败</h2>
+              <p>请检查后端服务是否运行</p>
+            </div>
+          `;
+        });
+    }
+
+    // 加载思维导图数据
+    function loadMindMap() {
+      fetch('http://localhost:3000/api/mindmap')
+        .then(response => response.json())
+        .then(data => {
+          const container = document.getElementById('mindmap-container');
+          container.innerHTML = renderMindMap(data, 0);
+        })
+        .catch(error => {
+          console.error('加载失败:', error);
+          document.getElementById('mindmap-container').innerHTML = `
+            <div class="empty-state">
+              <h2>加载失败</h2>
+              <p>请检查后端服务是否运行</p>
+            </div>
+          `;
+        });
+    }
+
+    // 渲染思维导图
+    function renderMindMap(node, level) {
+      const levelClass = `mindmap-level-${level}`;
+      const rootClass = level === 0 ? 'mindmap-root' : levelClass;
+      
+      let html = `
+        <div class="mindmap-node ${rootClass}">
+          ${node.topic}
+      `;
+      
+      if (node.content) {
+        html += `<p style="font-size: 12px; color: #666; margin-top: 5px;">${node.content}</p>`;
+      }
+      
+      if (node.children && node.children.length > 0) {
+        html += '<div>';
+        node.children.forEach(child => {
+          html += renderMindMap(child, level + 1);
+        });
+        html += '</div>';
+      }
+      
+      html += '</div>';
+      return html;
+    }
+
+    // 清空记忆库
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      if (confirm('确定要清空记忆库吗？')) {
+        fetch('http://localhost:3000/api/clear', {
+          method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+          // 刷新所有视图
+          loadMemory();
+          loadCategorizedMemory();
+          loadMindMap();
+        })
+        .catch(error => {
+          console.error('清空失败:', error);
+        });
+      }
+    });
+
+    // 刷新思维导图
+    document.getElementById('refreshMindMapBtn').addEventListener('click', () => {
+      loadMindMap();
+    });
+
+    // 初始加载
+    loadMemory();
+
+    // 每30秒自动刷新一次
+    setInterval(() => {
+      loadMemory();
+      if (document.querySelector('.tab[data-tab="categorized"].active')) {
+        loadCategorizedMemory();
+      } else if (document.querySelector('.tab[data-tab="mindmap"].active')) {
+        loadMindMap();
+      }
+    }, 30000);
+  </script>
+</body>
+</html>
